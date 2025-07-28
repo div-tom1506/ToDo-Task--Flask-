@@ -103,7 +103,7 @@ def update_task(task_id):
         logger.error(f'Error updating task {task_id}: {str(e)}', exc_info=True)
         raise
 
-@tasks_bp.route('/tasks/<task_id>', method=['DELETE'])
+@tasks_bp.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
     try:
         result = current_app.db.tasks.delete_one({'_id': ObjectId(task_id)})
