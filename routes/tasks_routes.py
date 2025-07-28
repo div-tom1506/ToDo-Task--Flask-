@@ -5,13 +5,13 @@ from models.task import Task
 import logging
 import datetime
 
-task_bp = Blueprint('task', __name__)
+tasks_bp = Blueprint('task', __name__)
 logger = logging.getLogger('todo_api')
 
 class ValidationError(Exception):
     pass
 
-@task_bp.route('/tasks', methods=['GET'])
+@tasks_bp.route('/tasks', methods=['GET'])
 def get_tasks():
     try:
         logger.info('Fetching all tasks')
@@ -20,7 +20,7 @@ def get_tasks():
     except Exception as e:
         logger.error(f'Error fetching tasks: {str(e)}', exc_info=True)
 
-@task_bp.route('/tasks', methods=['POST'])
+@tasks_bp.route('/tasks', methods=['POST'])
 def create_task():
     try:
         data = request.get_json()
@@ -40,7 +40,7 @@ def create_task():
         logger.error(f'Error creating task: {str(e)}', exc_info=True)
         raise
 
-@task_bp.route('/tasks/<task_id>', methods=['GET'])
+@tasks_bp.route('/tasks/<task_id>', methods=['GET'])
 def get_task(task_id):
     try:
         task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)})
@@ -56,7 +56,7 @@ def get_task(task_id):
         logger.error(f'Error retrieving task {task_id}: {str(e)}', exc_info=True)
         raise
 
-@task_bp.route('/tasks/<task_id>', methods=['PUT'])
+@tasks_bp.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
     try:
         task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)})
@@ -103,7 +103,7 @@ def update_task(task_id):
         logger.error(f'Error updating task {task_id}: {str(e)}', exc_info=True)
         raise
 
-@task_bp.route('/tasks/<task_id>', method=['DELETE'])
+@tasks_bp.route('/tasks/<task_id>', method=['DELETE'])
 def delete_task(task_id):
     try:
         result = current_app.db.tasks.delete_one({'_id': ObjectId(task_id)})
