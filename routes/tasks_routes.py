@@ -3,7 +3,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from bson import ObjectId
 from models.task import Task
 import logging
-import datetime
+from datetime import datetime, timezone
 
 tasks_bp = Blueprint('task', __name__)
 logger = logging.getLogger('todo_api')
@@ -83,7 +83,7 @@ def update_task(task_id):
         if 'completed' in data:
             update_data['completed'] = data['completed']
         
-        update_data['updated_at'] = datetime.utcnow()
+        update_data['updated_at'] = datetime.now(timezone.utc)
 
         if update_data:
             current_app.db.tasks.update_one(

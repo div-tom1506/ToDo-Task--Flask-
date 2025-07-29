@@ -1,6 +1,6 @@
 import logging
 from bson import ObjectId
-import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger('todo_app')
 
@@ -15,7 +15,7 @@ class Task:
             self.title = title.strip()
             self.description = description.strip() if isinstance(description, str) else ''
             self.completed = False
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(timezone.utc)
             self.updated_at = self.created_at
             logger.debug(f'Initialized task: {self.id}')
         except Exception as e:
@@ -38,7 +38,7 @@ class Task:
                 task = (data['title'], data.get('description', ''))
                 task.id = str(data['_id'])
                 task.completed = data.get('completed', False)
-                task.created_at = data.get('created_at', datetime.utcnow())
+                task.created_at = data.get('created_at', datetime.now(timezone.utc))
                 task.updated_at = data.get('updated_at', task.created_at)
                 logger.debug(f'Created task object from dict: {task.id}')
                 return task
