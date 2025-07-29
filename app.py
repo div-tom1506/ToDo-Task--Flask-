@@ -5,6 +5,7 @@ import logging.config
 from dotenv import load_dotenv
 import os
 from routes.tasks_routes import tasks_bp
+from exception_handling.exception_handers import register_exception_handlers
 
 # To add Swagger API Documentation
 
@@ -66,11 +67,8 @@ def create_app():
     # Registering blueprints
     app.register_blueprint(tasks_bp, url_prefix='/api')
 
-    # Global error handler
-    @app.errorhandler(Exception)
-    def handle_error(error):
-        logger.error(f'Unhandled error: {str(error)}', exc_info=True)
-        return {'error': 'Internal server error'}, 500
+    # register exception handlers
+    register_exception_handlers(app)
     
     return app
 

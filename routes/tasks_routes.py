@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.exceptions import BadRequest, NotFound
-from bson import ObjectId
 from models.task import Task
 import logging
 from datetime import datetime, timezone
@@ -44,19 +43,22 @@ def create_task():
         data = request.get_json()
         if not data or 'title' not in data:
             logger.warning('Invalid request: title is required')
-            raise ValidationError('Title is required')
+            return jsonify({'error': 'Title is required'}), 400
         
         task = Task(data['title'], data.get('description', ''))
         current_app.db.tasks.insert_one(task.to_dict())
         logger.info(f'Created task with ID: {task.id}')
         return jsonify(task.to_dict()), 201
     
-    except ValidationError as e:
-        logger.warning(f'Validation error: {str(e)}')
-        raise BadRequest(str(e))
+    except ConnectionError as e:
+        logger.error(f'MongoDB connection error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database connection error'}), 500
+    except PyMongoError as e:
+        logger.error(f'MongoDB operation error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database operation failed'}), 500
     except Exception as e:
         logger.error(f'Error creating task: {str(e)}', exc_info=True)
-        raise
+        return jsonify({'error': 'Internal server error'}), 500
 
 @tasks_bp.route('/tasks/<task_id>', methods=['GET'])
 def get_task(task_id):
@@ -66,16 +68,23 @@ def get_task(task_id):
         task = current_app.db.tasks.find_one({'_id': task_id})  # if string _id
         if not task:
             logger.warning(f'Task not found: {task_id}')
-            raise NotFound('Task not found')
+            return jsonify({'error': 'Task not found'}), 404
         
         logger.info(f'Retrieved task: {task_id}')
         return jsonify(Task.from_dict(task).to_dict()), 200
     
-    except NotFound as e:
-        raise
+    except ValueError as e:
+        logger.warning(f'Invalid task ID {task_id}: {str(e)}')
+        return jsonify({'error': 'Invalid task ID'}), 400
+    except ConnectionError as e:
+        logger.error(f'MongoDB connection error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database connection error'}), 500
+    except PyMongoError as e:
+        logger.error(f'MongoDB operation error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database operation failed'}), 500
     except Exception as e:
         logger.error(f'Error retrieving task {task_id}: {str(e)}', exc_info=True)
-        raise
+        return jsonify({'error': 'Internal server error'}), 500
 
 @tasks_bp.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
@@ -83,19 +92,19 @@ def update_task(task_id):
         task = current_app.db.tasks.find_one({'_id': task_id})
         if not task:
             logger.warning(f'Task not found for update: {task_id}')
-            raise NotFound('Task not found')
+            return jsonify({'error': 'Task not found'}), 404
         
         data = request.get_json()
         if not data:
             logger.warning('Invalid update request: no data provided')
-            raise ValidationError('No data provided')
+            return jsonify({'error': 'No data provided'}), 400
         
         update_data = {}
 
         if 'title' in data:
             if not isinstance(data['title'], str) or not data['title'].strip():
                 logger.warning('Invalid update request: title must be a non-empty string')
-                raise ValidationError('Title must be a non-empty string')
+                return jsonify({'error': 'Title must be a non-empty string'}), 400
             update_data['title'] = data['title'].strip()
         
         if 'description' in data:
@@ -116,13 +125,20 @@ def update_task(task_id):
             return jsonify(Task.from_dict(updated_task).to_dict()), 200
         else:
             logger.warning('No valid fields provided for update')
-            raise ValidationError('No valid fields provided for update')
+            return jsonify({'error': 'No valid fields provided for update'}), 400
         
-    except (NotFound, ValidationError) as e:
-        raise
+    except ValueError as e:
+        logger.warning(f'Invalid task ID {task_id}: {str(e)}')
+        return jsonify({'error': 'Invalid task ID'}), 400
+    except ConnectionError as e:
+        logger.error(f'MongoDB connection error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database connection error'}), 500
+    except PyMongoError as e:
+        logger.error(f'MongoDB operation error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database operation failed'}), 500
     except Exception as e:
         logger.error(f'Error updating task {task_id}: {str(e)}', exc_info=True)
-        raise
+        return jsonify({'error': 'Internal server error'}), 500
 
 @tasks_bp.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
@@ -130,12 +146,19 @@ def delete_task(task_id):
         result = current_app.db.tasks.delete_one({'_id': task_id})
         if result.deleted_count == 0:
             logger.warning(f'Task not found for deletion: {task_id}')
-            raise NotFound('Task not found')
+            return jsonify({'error': 'Task not found'}), 404
         logger.info(f'Deleted task: {task_id}')
         return jsonify({'message': 'Task deleted'}), 200
     
-    except NotFound as e:
-        raise
+    except ValueError as e:
+        logger.warning(f'Invalid task ID {task_id}: {str(e)}')
+        return jsonify({'error': 'Invalid task ID'}), 400
+    except ConnectionError as e:
+        logger.error(f'MongoDB connection error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database connection error'}), 500
+    except PyMongoError as e:
+        logger.error(f'MongoDB operation error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database operation failed'}), 500
     except Exception as e:
         logger.error(f'Error deleting task {task_id}: {str(e)}', exc_info=True)
-        raise
+        return jsonify({'error': 'Internal server error'}), 500
