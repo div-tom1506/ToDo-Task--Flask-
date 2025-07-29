@@ -55,7 +55,9 @@ def create_app():
     try:
         mongo_uri = os.getenv('MONGO_URI')
         mongo_client = MongoClient(mongo_uri)
-        app.debug = mongo_client['todo_app']
+        app.db = mongo_client['todo_app']
+        # Verify database connection
+        app.db.command('ping')
         logger.info('Connected to MongoDB')
     except Exception as e:
         logger.error(f'Failed to connect to MongoDB: {str(e)}', exc_info=True)

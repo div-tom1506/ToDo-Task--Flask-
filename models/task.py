@@ -22,26 +22,26 @@ class Task:
             logger.error(f'Error initializing task: {str(e)}', exc_info=True)
             raise
 
-        def to_dict(self):
-            return {
-                '_id': ObjectId(self.id),
-                'title': self.title,
-                'description': self.description,
-                'completed': self.completed,
-                'created_at': self.created_at,
-                'updated_at': self.updated_at
-            }
+    def to_dict(self):
+        return {
+            '_id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'completed': self.completed,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
         
-        @classmethod
-        def from_dict(cls, data):
-            try:
-                task = (data['title'], data.get('description', ''))
-                task.id = str(data['_id'])
-                task.completed = data.get('completed', False)
-                task.created_at = data.get('created_at', datetime.now(timezone.utc))
-                task.updated_at = data.get('updated_at', task.created_at)
-                logger.debug(f'Created task object from dict: {task.id}')
-                return task
-            except Exception as e:
-                logger.error(f'Error creating task from dict: {str(e)}', exc_info=True)
-            raise
+    @classmethod
+    def from_dict(cls, data):
+        try:
+            task = (data['title'], data.get('description', ''))
+            task.id = str(data['_id'])
+            task.completed = data.get('completed', False)
+            task.created_at = data.get('created_at', datetime.now(timezone.utc))
+            task.updated_at = data.get('updated_at', task.created_at)
+            logger.debug(f'Created task object from dict: {task.id}')
+            return task
+        except Exception as e:
+            logger.error(f'Error creating task from dict: {str(e)}', exc_info=True)
+        raise
