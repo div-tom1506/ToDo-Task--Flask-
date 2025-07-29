@@ -1,0 +1,73 @@
+{
+	"info": {
+		"_postman_id": "f910b1fa-3f02-4d2a-b2f3-a1f585f6648e",
+		"name": "Task ToDo Python Flask",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "12288951"
+	},
+	"item": [
+		{
+			"name": "create Tasks",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"Buy groceries updated\",\r\n    \"description\": \"Milk, eggs, bread, butter\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/api/tasks"
+			},
+			"response": []
+		},
+		{
+			"name": "List all tasks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/api/tasks"
+			},
+			"response": []
+		},
+		{
+			"name": "get Tasks with id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/api/tasks/6888690e0f7194a2513a012d"
+			},
+			"response": []
+		},
+		{
+			"name": "Update tasks with id",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"Gemini Project\",\r\n    \"description\": \"To create a project using gemini api\",\r\n    \"completed\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/api/tasks/6888865715375844b641b88a"
+			},
+			"response": []
+		},
+		{
+			"name": "delete tasks with id",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": "http://127.0.0.1:5000/api/tasks/6888690e0f7194a2513a012d"
+			},
+			"response": []
+		}
+	]
+}
