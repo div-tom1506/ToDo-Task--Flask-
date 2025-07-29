@@ -5,7 +5,7 @@ import logging.config
 from dotenv import load_dotenv
 import os
 from routes.tasks_routes import tasks_bp
-from exception_handling.exception_handers import register_exception_handlers
+from utils.global_error_handlers import register_exception_handlers
 
 # To add Swagger API Documentation
 
