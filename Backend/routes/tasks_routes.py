@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, current_app
-from werkzeug.exceptions import BadRequest, NotFound
 from models.task import Task
 import logging
 from datetime import datetime, timezone
