@@ -35,7 +35,9 @@ class Task:
     @classmethod
     def from_dict(cls, data):
         try:
-            task = (data['title'], data.get('description', ''))
+            if not isinstance(data, dict):
+                raise ValueError(f'Expected dict, got {type(data).__name__}')
+            task = cls(data['title'], data.get('description', ''))
             task.id = str(data['_id'])
             task.completed = data.get('completed', False)
             task.created_at = data.get('created_at', datetime.now(timezone.utc))

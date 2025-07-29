@@ -4,6 +4,7 @@ from bson import ObjectId
 from models.task import Task
 import logging
 from datetime import datetime, timezone
+from pymongo.errors import PyMongoError, ConnectionFailure
 
 tasks_bp = Blueprint('task', __name__)
 logger = logging.getLogger('todo_api')
@@ -16,9 +17,26 @@ def get_tasks():
     try:
         logger.info('Fetching all tasks')
         tasks = current_app.db.tasks.find()
-        return jsonify([Task.from_dict(task).to_dict() for task in tasks]), 200
+        task_list = []
+        for task in tasks:
+            try:
+                task_list.append(Task.from_dict(task).to_dict())
+            except Exception as e:
+                logger.warning(f'Failed to process task {task.get("_id")}: {str(e)}')
+                continue
+        if not task_list:
+            logger.info('No valid tasks found')
+        return jsonify(task_list), 200
+    
+    except ConnectionFailure as e:
+        logger.error(f'MongoDB connection error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database connection error'}), 500
+    except PyMongoError as e:
+        logger.error(f'MongoDB operation error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Database operation failed'}), 500
     except Exception as e:
-        logger.error(f'Error fetching tasks: {str(e)}', exc_info=True)
+        logger.error(f'Unexpected error fetching tasks: {str(e)}', exc_info=True)
+        return jsonify({'error': 'Internal server error'}), 500
 
 @tasks_bp.route('/tasks', methods=['POST'])
 def create_task():
@@ -43,10 +61,13 @@ def create_task():
 @tasks_bp.route('/tasks/<task_id>', methods=['GET'])
 def get_task(task_id):
     try:
-        task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)})
+        # if id is stored as object in db
+        # task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)}) 
+        task = current_app.db.tasks.find_one({'_id': task_id})  # if string _id
         if not task:
             logger.warning(f'Task not found: {task_id}')
             raise NotFound('Task not found')
+        
         logger.info(f'Retrieved task: {task_id}')
         return jsonify(Task.from_dict(task).to_dict()), 200
     
@@ -59,7 +80,7 @@ def get_task(task_id):
 @tasks_bp.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
     try:
-        task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)})
+        task = current_app.db.tasks.find_one({'_id': task_id})
         if not task:
             logger.warning(f'Task not found for update: {task_id}')
             raise NotFound('Task not found')
@@ -87,12 +108,12 @@ def update_task(task_id):
 
         if update_data:
             current_app.db.tasks.update_one(
-                {'_id': ObjectId(task_id)},
+                {'_id': task_id},
                 {'$set': update_data}
             )
-            updated_task = current_app.db.tasks.find_one({'_id': ObjectId(task_id)})
+            updated_task = task = current_app.db.tasks.find_one({'_id': task_id})
             logger.info(f'Updated task: {task_id}')
-            return jsonify(Task.from_dict(update_data).to_dict()), 200
+            return jsonify(Task.from_dict(updated_task).to_dict()), 200
         else:
             logger.warning('No valid fields provided for update')
             raise ValidationError('No valid fields provided for update')
@@ -106,7 +127,7 @@ def update_task(task_id):
 @tasks_bp.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
     try:
-        result = current_app.db.tasks.delete_one({'_id': ObjectId(task_id)})
+        result = current_app.db.tasks.delete_one({'_id': task_id})
         if result.deleted_count == 0:
             logger.warning(f'Task not found for deletion: {task_id}')
             raise NotFound('Task not found')
